@@ -1,0 +1,6 @@
+{
+  "name": "EcoTrace AI",
+  "description": "Smart Carbon Footprint Agent providing personalized sustainability roadmap and carbon analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
