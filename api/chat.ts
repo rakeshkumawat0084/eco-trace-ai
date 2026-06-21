@@ -1,7 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -15,7 +14,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Lazy initialization of the Gemini client within the request handler
-    const ai = new GoogleGenAI({ apiKey: key });
+    const ai = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
 
     // Use the modern SDK pattern with the recommended gemini-3.5-flash model
     const responseStream = await ai.models.generateContentStream({

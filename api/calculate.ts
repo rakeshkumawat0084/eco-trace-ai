@@ -1,7 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { calculateCarbonFootprint } from '../src/lib/calculations';
+import { calculateCarbonFootprint } from './calculations';
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default function handler(req: any, res: any) {
   // Allow OPTIONS for CORS if needed, but Vercel handles this mostly
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

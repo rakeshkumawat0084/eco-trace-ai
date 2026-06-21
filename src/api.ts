@@ -62,7 +62,14 @@ app.post("/api/chat", async (req, res) => {
     }
 
     // Lazy initialization of the Gemini client inside the route handler
-    const aiClient = new GoogleGenAI({ apiKey: key });
+    const aiClient = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
 
     const responseStream = await aiClient.models.generateContentStream({
       model: "gemini-3.5-flash",
