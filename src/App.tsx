@@ -98,6 +98,7 @@ export default function App() {
   const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   // Derived Score taking into account reduction tasks
   const getDisplayScore = () => {
@@ -185,6 +186,25 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
+    const checkApi = async () => {
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          setApiStatus('online');
+        } else {
+          setApiStatus('offline');
+        }
+      } catch (err) {
+        setApiStatus('offline');
+      }
+    };
+
+    checkApi();
+    const interval = setInterval(checkApi, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const savedHistory = localStorage.getItem('ecoTraceAudits');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, []);
@@ -222,23 +242,32 @@ export default function App() {
         body: JSON.stringify(formData)
       });
 
+      const contentType = res.headers.get("content-type");
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+        } else {
+          const text = await res.text();
+          throw new Error(`Server Error (${res.status}): ${text.slice(0, 100)}${text.length > 100 ? '...' : ''}`);
+        }
       }
 
-      const data = await res.json();
-      
-      if (data.success) {
-        const newResults = data.data;
-        setResults(newResults);
-        saveAudit(newResults);
-        setActiveTasks([]); // Reset tasks on new calculation
-        
-        // Auto-chat initial analysis
-        getAIAnalysis(newResults);
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.success) {
+          const newResults = data.data;
+          setResults(newResults);
+          saveAudit(newResults);
+          setActiveTasks([]); // Reset tasks on new calculation
+          
+          // Auto-chat initial analysis
+          getAIAnalysis(newResults);
+        } else {
+          setAlert({ title: 'Calculation Error', message: data.error || 'Failed to calculate footprint.' });
+        }
       } else {
-        setAlert({ title: 'Calculation Error', message: data.error || 'Failed to calculate footprint.' });
+        throw new Error("Invalid response format from server (expected JSON)");
       }
     } catch (err: any) {
       setAlert({ 
@@ -596,7 +625,24 @@ export default function App() {
             </div>
             <div className="min-w-0">
               <h1 className="font-bold text-lg sm:text-xl tracking-tight dark:text-white truncate">EcoTrace <span className="text-emerald-600">AI</span></h1>
-              <p className="hidden xs:block text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none truncate">Sustainability Catalyst</p>
+              <div className="flex items-center gap-2">
+                <p className="hidden xs:block text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none truncate">Sustainability Catalyst</p>
+                <div 
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter transition-all ${
+                    apiStatus === 'online' ? 'bg-emerald-500/10 text-emerald-500' : 
+                    apiStatus === 'offline' ? 'bg-red-500/10 text-red-500' : 
+                    'bg-slate-500/10 text-slate-400'
+                  }`}
+                  title={apiStatus === 'online' ? 'API Engine Online' : apiStatus === 'offline' ? 'API Engine Offline' : 'Checking Connection...'}
+                >
+                  <span className={`w-1 h-1 rounded-full ${
+                    apiStatus === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                    apiStatus === 'offline' ? 'bg-red-500' : 
+                    'bg-slate-400 animate-pulse'
+                  }`} />
+                  <span className="hidden leading-none xs:inline">{apiStatus}</span>
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
