@@ -84,7 +84,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const stream = await ai.interactions.create({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       input: message,
       system_instruction: systemInstruction,
       stream: true,
