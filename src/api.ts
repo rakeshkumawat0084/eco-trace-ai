@@ -1,5 +1,5 @@
 import express from "express";
-import { rateLimit } from "express-rate-limit";
+import rateLimit from "express-rate-limit";
 import { GoogleGenAI } from "@google/genai";
 import { calculateCarbonFootprint } from "./lib/calculations";
 
@@ -25,8 +25,8 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use("/api/", limiter);
 app.set("trust proxy", 1);
+app.use("/api/", limiter);
 app.use(express.json());
 
 const ai = new GoogleGenAI({
@@ -98,16 +98,18 @@ app.post("/api/chat", async (req, res) => {
     
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
-    const stream = await ai.interactions.create({
+    const result = await ai.models.generateContentStream({
       model: "gemini-3.5-flash",
-      input: message,
-      system_instruction,
-      stream: true,
+      contents: message,
+      config: {
+        systemInstruction: system_instruction,
+      }
     });
 
-    for await (const event of stream) {
-      if (event.event_type === "step.delta" && event.delta.type === "text") {
-        res.write(event.delta.text);
+    for await (const chunk of result) {
+      const chunkText = chunk.text;
+      if (chunkText) {
+        res.write(chunkText);
       }
     }
 
