@@ -81,7 +81,20 @@ export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any)
         </div>
 
         <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Dietary Profile</label>
+          <label htmlFor="washingMachine" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Washing Loads (Per Week)</label>
+          <input 
+            type="number" 
+            id="washingMachine"
+            value={data.washingMachine}
+            onChange={(e) => onUpdate({...data, washingMachine: e.target.value})}
+            placeholder="e.g. 2"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+            aria-label="Number of washing machine loads per week"
+          />
+        </div>
+
+        <div role="group" aria-labelledby="diet-profile-label">
+          <label id="diet-profile-label" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Dietary Profile</label>
           <div className="grid grid-cols-3 gap-2">
             {['vegan', 'vegetarian', 'omnivore'].map((type) => (
               <motion.button

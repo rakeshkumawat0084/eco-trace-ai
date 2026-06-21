@@ -87,6 +87,7 @@ export const GreenCareers = () => {
                    setActiveTab(d);
                    setShowSuccess(false);
                  }}
+                 aria-label={`Select career domain: ${d.title}`}
                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                    activeTab.id === d.id 
                    ? 'bg-slate-700 text-white shadow-lg' 
@@ -157,6 +158,7 @@ export const GreenCareers = () => {
                     <button 
                       onClick={handleGetGuide}
                       disabled={isGenerating || showSuccess}
+                      aria-label={`Download detailed career guide for ${activeTab.title}`}
                       className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all min-w-[150px] shadow-lg relative overflow-hidden ${
                         showSuccess 
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 

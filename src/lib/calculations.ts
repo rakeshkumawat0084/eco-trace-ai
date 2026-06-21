@@ -74,10 +74,12 @@ export function calculateCarbonFootprint(input: FootprintInput): CalculationResu
 /**
  * Calculates direct water usage per month.
  */
-export function calculateDirectWater(data: { showerMinutes: string | number, roWaste: string | number, washingMachine: string | number }): number {
-  const shower = (parseFloat(data.showerMinutes.toString()) || 0) * 12 * 30; // 12L per min
-  const ro = (parseFloat(data.roWaste.toString()) || 0) * 30; // Liters per day * 30
-  const washing = (parseFloat(data.washingMachine.toString()) || 0) * 100 * 4; // 100L per load * 4 weeks
+export function calculateDirectWater(data: { showerMinutes?: string | number, roWaste?: string | number, washingMachine?: string | number }): number {
+  const val = (v: any) => (v != null ? parseFloat(v.toString()) : 0) || 0;
+  
+  const shower = val(data.showerMinutes) * 12 * 30; // 12L per min
+  const ro = val(data.roWaste) * 30; // Liters per day * 30
+  const washing = val(data.washingMachine) * 100 * 4; // 100L per load * 4 weeks
   return shower + ro + washing;
 }
 

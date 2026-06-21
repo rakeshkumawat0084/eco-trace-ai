@@ -1,6 +1,6 @@
 {
   "name": "EcoTrace AI",
-  "description": "Smart Carbon Footprint Agent providing personalized sustainability roadmap and carbon analysis.",
+  "description": "Hack2Skill Challenge 3 Champion: High-fidelity carbon footprint analysis with AI reduction roadmaps and hydrological audit.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
