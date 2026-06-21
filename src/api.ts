@@ -1,8 +1,19 @@
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { calculateCarbonFootprint } from "./lib/calculations";
+import "dotenv/config";
 
 const app = express();
+
+// High-Performance Security & Production Logging Layer
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
+app.use(express.json());
 
 // 1. Health check BEFORE any middleware or limiter for Maximum Availability
 app.get("/api/health", (req, res) => {
@@ -13,26 +24,20 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// High-Performance Security & Production Logging Layer
-app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    
-    const timestamp = new Date().toISOString();
-    console.log(`[PRODUCTION LOG - ${timestamp}] ${req.method} request initiated on path: ${req.url}`);
-    next();
-});
-
-app.use(express.json());
-
 // Access API key from environment lazily
-let genAI: GoogleGenerativeAI | null = null;
-function getGenAI() {
-  if (!genAI) {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy_key_for_load");
+let aiClient: any = null;
+function getAI() {
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY || "dummy_key",
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
-  return genAI;
+  return aiClient;
 }
 
 // Secure input validation middleware to ensure High-Fidelity processing
@@ -46,7 +51,6 @@ function validateMetrics(req: express.Request, res: express.Response, next: expr
   const electricity = parseFloat(metrics.electricity);
   const transport = parseFloat(metrics.distance);
   
-  // Strict non-negative check
   if ((metrics.electricity !== undefined && (isNaN(electricity) || electricity < 0)) || 
       (metrics.distance !== undefined && (isNaN(transport) || transport < 0))) {
       return res.status(400).json({ error: "Metrics validation error: Numerical values must be non-negative numbers." });
@@ -70,17 +74,12 @@ app.post("/api/calculate", validateMetrics, (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   const { message, context } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey || apiKey.trim() === "") {
-    return res.status(500).json({ error: "API key is missing. Please add GEMINI_API_KEY to your secrets." });
-  }
+  const ai = getAI();
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Transfer-Encoding', 'chunked');
 
   try {
-    // Robust safety fallback for breakdown data
     const breakdown = context?.breakdown || { electricity: 0, transport: 0, diet: 0 };
     const totalScore = context?.totalScore || 0;
 
@@ -95,25 +94,26 @@ app.post("/api/chat", async (req, res) => {
     
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
-    const model = getGenAI().getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: system_instruction,
+    const stream = await ai.models.generateContentStream({
+      model: "gemini-3.5-flash",
+      contents: message,
+      config: {
+        systemInstruction: system_instruction,
+      }
     });
-    
-    const result = await model.generateContentStream(message);
 
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      if (chunkText) {
-        res.write(chunkText);
+    for await (const chunk of stream) {
+      const text = chunk.text;
+      if (text) {
+        res.write(text);
       }
     }
-
     res.end();
   } catch (error: any) {
     console.error("AI Error:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: `AI Engine Error: ${error.message}` });
+      res.status(500).write(`AI Engine Error: ${error.message}`);
+      res.end();
     } else {
       res.write(`\n\n[Error: ${error.message}]`);
       res.end();

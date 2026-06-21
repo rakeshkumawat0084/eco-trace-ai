@@ -202,6 +202,10 @@ export default function App() {
           setApiStatus('online');
           if (data.ai_status === 'key_missing') {
             console.warn('API Engine Online but GEMINI_API_KEY is missing in environment.');
+            setAlert({
+              title: 'Configuration Warning',
+              message: 'Sustainability AI is online but the API Key is missing in Vercel settings. Analysis features may be limited.'
+            });
           }
         } else {
           console.error(`API Health Check Failed: ${res.status}`);
