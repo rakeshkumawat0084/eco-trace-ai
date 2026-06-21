@@ -1,15 +1,45 @@
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { calculateCarbonFootprint } from "./lib/calculations";
 
 const app = express();
 
-// 1. Basic Health Check (Early Response)
+// Initialize the Gemini client
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    }
+  }
+});
+
+// --- LOGGING MIDDLEWARE ---
+app.use((req, res, next) => {
+    console.log(`[VERCEL API]: ${req.method} ${req.url}`);
+    next();
+});
+
+// --- ROBUST HEALTH CHECK HANDLERS ---
+
+// Endpoint for /api/health (Standard)
 app.get("/api/health", (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json({ 
     status: "online", 
     timestamp: new Date().toISOString(),
-    ai_status: !!process.env.GEMINI_API_KEY ? "key_configured" : "key_missing"
+    ai_status: !!process.env.GEMINI_API_KEY ? "key_configured" : "key_missing",
+    mode: "path_api_health"
+  });
+});
+
+// Endpoint for /health (Fallback if mapped differently)
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "online", 
+    timestamp: new Date().toISOString(),
+    ai_status: !!process.env.GEMINI_API_KEY ? "key_configured" : "key_missing",
+    mode: "path_health"
   });
 });
 
@@ -21,13 +51,6 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     next();
 });
-
-// AI Initialization
-const getAI = () => {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return null;
-    return new GoogleGenerativeAI(key);
-};
 
 // --- API ROUTES ---
 
@@ -42,23 +65,25 @@ app.post("/api/calculate", (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message, context } = req.body;
-    const ai = getAI();
-    if (!ai) {
-        return res.status(500).send("AI Configuration Missing: Please set GEMINI_API_KEY in Vercel environment variables.");
+    const { message } = req.body;
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+        return res.status(200).send("EcoTrace AI: GEMINI_API_KEY is missing. Analysis features may be limited.");
     }
 
-    const model = ai.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: "You are EcoTrace AI, a carbon emissions expert consultant."
+    const responseStream = await ai.models.generateContentStream({
+      model: "gemini-3.5-flash",
+      contents: message,
+      config: {
+        systemInstruction: "You are EcoTrace AI, a carbon emissions expert consultant. Analyze the user's footprint data carefully and provide structured, actionable advice."
+      }
     });
 
-    const result = await model.generateContentStream(message);
-    
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      res.write(text);
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        res.write(chunk.text);
+      }
     }
     res.end();
   } catch (error: any) {

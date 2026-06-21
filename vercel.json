@@ -2,12 +2,16 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/health",
-      "destination": "/api/health.ts"
+      "source": "/api/chat",
+      "destination": "/api/chat.ts"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.ts"
+      "source": "/api/calculate",
+      "destination": "/api/calculate.ts"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.ts"
     },
     {
       "source": "/(.*)",

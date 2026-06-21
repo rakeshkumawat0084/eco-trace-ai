@@ -111,6 +111,7 @@ export default function App() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const hasWarnedApi = useRef(false);
 
   // Derived Score taking into account reduction tasks
   const getDisplayScore = () => {
@@ -200,8 +201,9 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           setApiStatus('online');
-          if (data.ai_status === 'key_missing') {
+          if (data.ai_status === 'key_missing' && !hasWarnedApi.current) {
             console.warn('API Engine Online but GEMINI_API_KEY is missing in environment.');
+            hasWarnedApi.current = true;
             setAlert({
               title: 'Configuration Warning',
               message: 'Sustainability AI is online but the API Key is missing in Vercel settings. Analysis features may be limited.'
