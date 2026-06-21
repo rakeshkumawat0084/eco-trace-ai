@@ -1,9 +1,17 @@
 import express from "express";
-import rateLimit from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { calculateCarbonFootprint } from "./lib/calculations";
 
 const app = express();
+
+// 1. Health check BEFORE any middleware or limiter for Maximum Availability
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    status: "online", 
+    timestamp: new Date().toISOString(),
+    ai_status: !!process.env.GEMINI_API_KEY ? "key_configured" : "key_missing"
+  });
+});
 
 // High-Performance Security & Production Logging Layer
 app.use((req, res, next) => {
@@ -16,21 +24,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// Production rate limiter to prevent potential API abuse vectors
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: { error: "Security Alert: Too many requests from this IP. Please try again after 15 minutes." },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.set("trust proxy", 1);
-app.use("/api/", limiter);
 app.use(express.json());
 
-// Access API key from environment
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Access API key from environment lazily
+let genAI: GoogleGenerativeAI | null = null;
+function getGenAI() {
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy_key_for_load");
+  }
+  return genAI;
+}
 
 // Secure input validation middleware to ensure High-Fidelity processing
 function validateMetrics(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -92,7 +95,7 @@ app.post("/api/chat", async (req, res) => {
     
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
-    const model = genAI.getGenerativeModel({ 
+    const model = getGenAI().getGenerativeModel({ 
       model: "gemini-1.5-flash",
       systemInstruction: system_instruction,
     });
@@ -116,10 +119,6 @@ app.post("/api/chat", async (req, res) => {
       res.end();
     }
   }
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 export default app;

@@ -198,17 +198,23 @@ export default function App() {
       try {
         const res = await fetch('/api/health');
         if (res.ok) {
+          const data = await res.json();
           setApiStatus('online');
+          if (data.ai_status === 'key_missing') {
+            console.warn('API Engine Online but GEMINI_API_KEY is missing in environment.');
+          }
         } else {
+          console.error(`API Health Check Failed: ${res.status}`);
           setApiStatus('offline');
         }
       } catch (err) {
+        console.error('API connection failed:', err);
         setApiStatus('offline');
       }
     };
 
     checkApi();
-    const interval = setInterval(checkApi, 30000); // Check every 30s
+    const interval = setInterval(checkApi, 10000); // Check every 10s for better live feedback
     return () => clearInterval(interval);
   }, []);
 
