@@ -4,16 +4,6 @@ import { calculateCarbonFootprint } from "./lib/calculations";
 
 const app = express();
 
-// Initialize the Gemini client
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
-  }
-});
-
 // --- LOGGING MIDDLEWARE ---
 app.use((req, res, next) => {
     console.log(`[VERCEL API]: ${req.method} ${req.url}`);
@@ -71,7 +61,10 @@ app.post("/api/chat", async (req, res) => {
         return res.status(200).send("EcoTrace AI: GEMINI_API_KEY is missing. Analysis features may be limited.");
     }
 
-    const responseStream = await ai.models.generateContentStream({
+    // Lazy initialization of the Gemini client inside the route handler
+    const aiClient = new GoogleGenAI({ apiKey: key });
+
+    const responseStream = await aiClient.models.generateContentStream({
       model: "gemini-3.5-flash",
       contents: message,
       config: {

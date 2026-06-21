@@ -1,16 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Initialize the Gemini client on the server
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
-  }
-});
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -24,7 +14,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).send("EcoTrace AI: GEMINI_API_KEY is missing. Please configure it in your environment settings to enable AI audits.");
     }
 
-    // Use the modern SDK pattern with the recommended model
+    // Lazy initialization of the Gemini client within the request handler
+    const ai = new GoogleGenAI({ apiKey: key });
+
+    // Use the modern SDK pattern with the recommended gemini-3.5-flash model
     const responseStream = await ai.models.generateContentStream({
       model: "gemini-3.5-flash",
       contents: message,

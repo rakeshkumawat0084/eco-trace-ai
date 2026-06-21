@@ -209,18 +209,22 @@ export default function App() {
               message: 'Sustainability AI is online but the API Key is missing in Vercel settings. Analysis features may be limited.'
             });
           }
+        } else if (res.status === 429) {
+          // A 429 Too Many Requests response is structurally online, but throttled.
+          setApiStatus('online');
+          console.warn('API Engine is online but currently rate-limited (429).');
         } else {
-          console.error(`API Health Check Failed: ${res.status}`);
+          console.warn(`API Health Check non-ok response: ${res.status}`);
           setApiStatus('offline');
         }
       } catch (err) {
-        console.error('API connection failed:', err);
+        console.warn('API connection check failed:', err);
         setApiStatus('offline');
       }
     };
 
     checkApi();
-    const interval = setInterval(checkApi, 10000); // Check every 10s for better live feedback
+    const interval = setInterval(checkApi, 30000); // Check every 30s for optimal balance
     return () => clearInterval(interval);
   }, []);
 

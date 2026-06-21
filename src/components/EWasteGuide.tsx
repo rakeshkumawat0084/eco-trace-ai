@@ -58,7 +58,7 @@ export const EWasteGuide = () => {
             }`}
             aria-label={`Select e-waste category: ${cat.name}`}
           >
-            {React.cloneElement(cat.icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5 shrink-0' })}
+            {React.cloneElement(cat.icon as React.ReactElement<any>, { className: 'w-4 h-4 sm:w-5 sm:h-5 shrink-0' })}
             <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter text-center leading-tight">{cat.name.split('/')[0]}</span>
           </motion.button>
         ))}
