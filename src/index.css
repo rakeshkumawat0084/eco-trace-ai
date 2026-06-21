@@ -30,3 +30,32 @@
 .animate-in {
     animation: slideUpFade 0.4s ease-out forwards;
 }
+
+@media print {
+  body {
+    background-color: white !important;
+  }
+  
+  #root > *:not(#report-print-container) {
+    display: none !important;
+  }
+  
+  #report-print-container {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  
+  #pdf-report {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20mm !important;
+  }
+}

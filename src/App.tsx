@@ -4,7 +4,7 @@ import {
   SendHorizontal, Moon, Sun, Download, Image as ImageIcon, FileText,
   Share2, Save, Trash2, ShieldCheck, Trophy, Anchor, 
   AlertCircle, AlertTriangle, Users, X, Copy, ChevronRight,
-  TrendingUp, TrendingDown, Bot, Sparkles
+  TrendingUp, TrendingDown, Bot, Sparkles, Printer, FileDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2pdf from 'html2pdf.js';
@@ -1411,7 +1411,7 @@ export default function App() {
       <Footer />
 
       {/* Hidden PDF Export Template */}
-      <div className="absolute -left-[9999px] top-0 overflow-hidden">
+      <div id="report-print-container" className="absolute -left-[9999px] top-0 overflow-hidden">
         <div 
           id="pdf-report" 
           ref={pdfTemplateRef}
@@ -1601,28 +1601,36 @@ export default function App() {
                  </div>
 
                  {/* Rendering the template in the modal */}
-                 <div className="border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50 shadow-inner">
+                 <div className="border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50 shadow-inner relative h-[400px] sm:h-[600px] overflow-x-auto">
                     <div 
-                      className="bg-white mx-auto transform origin-top scale-[0.6] sm:scale-[0.8] md:scale-100 p-8 sm:p-12 w-full min-w-[320px] max-w-[800px]"
+                      className="bg-white mx-auto transform origin-top scale-[0.45] xs:scale-[0.55] sm:scale-[0.75] md:scale-[0.9] lg:scale-100 p-8 sm:p-12 w-full min-w-[320px] max-w-[800px]"
                       dangerouslySetInnerHTML={{ __html: pdfTemplateRef.current?.outerHTML || '' }}
                       style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                     />
                  </div>
 
-                 <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center justify-between border-t border-slate-100 pt-8">
+                 <div className="mt-10 flex flex-col lg:flex-row gap-6 items-center justify-between border-t border-slate-100 pt-8">
                     <div className="flex items-center gap-3">
-                       <Info className="w-4 h-4 text-indigo-500" />
-                       <p className="text-xs font-medium text-slate-500">This is how your final PDF export will look on A4 paper.</p>
+                       <Info className="w-4 h-4 text-indigo-500 shrink-0" />
+                       <p className="text-[10px] sm:text-xs font-medium text-slate-500">The preview simulates A4 paper output. Use "Print" for direct hardcopy or "Download" for a high-fidelity PDF file.</p>
                     </div>
-                    <button 
-                      onClick={() => {
-                        setShowPreviewModal(false);
-                        exportToPDF();
-                      }}
-                      className="w-full sm:w-auto bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-500 shadow-xl shadow-emerald-200 transition-all active:scale-95"
-                    >
-                      Download PDF
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <button 
+                          onClick={() => window.print()}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 border border-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all hover:border-slate-300"
+                        >
+                          <Printer className="w-4 h-4" /> Print
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setShowPreviewModal(false);
+                            exportToPDF();
+                          }}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 shadow-xl shadow-emerald-200 transition-all active:scale-95"
+                        >
+                          <FileDown className="w-4 h-4" /> Download PDF
+                        </button>
+                    </div>
                  </div>
               </div>
             </motion.div>
