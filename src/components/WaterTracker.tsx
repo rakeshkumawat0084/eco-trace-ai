@@ -1,29 +1,13 @@
 import React, { useState } from 'react';
 import { Droplets, Info, TrendingDown, Coffee, Beef, Shirt } from 'lucide-react';
 import { motion } from 'motion/react';
+import { calculateDirectWater, calculateVirtualWater } from '../lib/calculations';
 
 export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any) => void }) => {
   const [showVirtual, setShowVirtual] = useState(false);
 
-  const calculateDirectWater = () => {
-    const shower = (parseFloat(data.showerMinutes) || 0) * 12 * 30; // 12L per min
-    const ro = (parseFloat(data.roWaste) || 0) * 30; // Liters per day * 30
-    const washing = (parseFloat(data.washingMachine) || 0) * 100 * 4; // 100L per load * 4 weeks
-    return shower + ro + washing;
-  };
-
-  const calculateVirtualWater = () => {
-    // Virtual water estimates (monthly)
-    const dietImpact = {
-      omnivore: 150000, // Roughly 5000L/day
-      vegetarian: 90000, // Roughly 3000L/day
-      vegan: 60000     // Roughly 2000L/day
-    };
-    return dietImpact[data.dietType as keyof typeof dietImpact];
-  };
-
-  const directWater = calculateDirectWater();
-  const virtualWater = calculateVirtualWater();
+  const directWater = calculateDirectWater(data);
+  const virtualWater = calculateVirtualWater(data.dietType);
   const totalWater = directWater + (showVirtual ? virtualWater : 0);
   
   const limit = 4500; // Sustainable direct limit (liters/month)

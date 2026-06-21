@@ -29,11 +29,11 @@ app.set("trust proxy", 1);
 app.use("/api/", limiter);
 app.use(express.json());
 
-const ai = new GoogleGenAI({
+const ai = new GoogleGenAI({ 
   apiKey: process.env.GEMINI_API_KEY || "",
   httpOptions: {
     headers: {
-      'User-Agent': 'aistudio-build',
+      'User-Agent': 'aistudio-build'
     }
   }
 });
@@ -99,7 +99,7 @@ app.post("/api/chat", async (req, res) => {
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
     const result = await ai.models.generateContentStream({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: message,
       config: {
         systemInstruction: system_instruction,

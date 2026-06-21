@@ -319,7 +319,23 @@ export default function App() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `Status: ${response.status}`);
+        let errorMessage = errorText;
+        try {
+          const parsed = JSON.parse(errorText);
+          errorMessage = parsed.error || errorText;
+        } catch (e) {
+          // Fallback to raw text
+        }
+
+        if (response.status === 404 || response.status === 400 || errorMessage.toLowerCase().includes('not found') || errorMessage.toLowerCase().includes('supported')) {
+          setAlert({
+            title: 'Model Configuration Detection',
+            message: 'A diagnostic sync detected a model configuration mismatch (404/400). Please ensure the AI model identifier is correctly formatted and available for the current API version.'
+          });
+          throw new Error('Model Configuration Failure');
+        }
+
+        throw new Error(errorMessage || `Status: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -381,7 +397,23 @@ export default function App() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `Status: ${response.status}`);
+        let errorMessage = errorText;
+        try {
+          const parsed = JSON.parse(errorText);
+          errorMessage = parsed.error || errorText;
+        } catch (e) {
+          // Fallback to raw text
+        }
+
+        if (response.status === 404 || response.status === 400 || errorMessage.toLowerCase().includes('not found') || errorMessage.toLowerCase().includes('supported')) {
+          setAlert({
+            title: 'Model Configuration Detection',
+            message: 'A diagnostic sync detected a model configuration mismatch (404/400). Please ensure the AI model identifier is correctly formatted and available for the current API version.'
+          });
+          throw new Error('Model Configuration Failure');
+        }
+
+        throw new Error(errorMessage || `Status: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -768,7 +800,13 @@ export default function App() {
                     </div>
                     <div>
                       <label htmlFor="distanceUnit" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Unit</label>
-                      <select id="distanceUnit" value={formData.distanceUnit} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white text-sm" aria-label="Distance unit">
+                      <select 
+                        id="distanceUnit" 
+                        value={formData.distanceUnit} 
+                        onChange={handleInputChange} 
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white text-sm" 
+                        aria-label="Select preferred distance measurement unit (Kilometers or Miles)"
+                      >
                         <option value="km">KM</option>
                         <option value="mi">Miles</option>
                       </select>
@@ -777,7 +815,13 @@ export default function App() {
 
                 <div>
                   <label htmlFor="fuelType" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Vehicle Fuel Type</label>
-                  <select id="fuelType" value={formData.fuelType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" aria-label="Vehicle fuel type">
+                  <select 
+                    id="fuelType" 
+                    value={formData.fuelType} 
+                    onChange={handleInputChange} 
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" 
+                    aria-label="Select the primary fuel type of your vehicle to calculate transport emissions"
+                  >
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
                     <option value="EV">Electric Vehicle</option>
@@ -786,7 +830,13 @@ export default function App() {
 
                 <div>
                   <label htmlFor="dietType" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Dietary Lifestyle</label>
-                  <select id="dietType" value={formData.dietType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" aria-label="Dietary lifestyle">
+                  <select 
+                    id="dietType" 
+                    value={formData.dietType} 
+                    onChange={handleInputChange} 
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" 
+                    aria-label="Select your primary dietary lifestyle to assess food-related carbon impact"
+                  >
                     <option value="Meat">Omnivore (Meat Eater)</option>
                     <option value="Vegetarian">Vegetarian</option>
                     <option value="Vegan">Vegan</option>
@@ -802,7 +852,7 @@ export default function App() {
                     type="range" id="localSourced" min="0" max="100" step="5"
                     value={formData.localSourced} onChange={handleInputChange}
                     className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                    aria-label="Local sourcing percentage"
+                    aria-label="Adjust percentage of food items sourced locally to reduce transportation footprint"
                   />
                   <div className="flex justify-between mt-1">
                     <span className="text-[10px] text-slate-400 font-medium">100% Imported</span>
