@@ -1,6 +1,6 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { calculateCarbonFootprint } from "./lib/calculations";
 
 const app = express();
@@ -29,14 +29,8 @@ app.set("trust proxy", 1);
 app.use("/api/", limiter);
 app.use(express.json());
 
-const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || "",
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build'
-    }
-  }
-});
+// Access API key from environment
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 // Secure input validation middleware to ensure High-Fidelity processing
 function validateMetrics(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -98,16 +92,15 @@ app.post("/api/chat", async (req, res) => {
     
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
-    const result = await ai.models.generateContentStream({
+    const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
-      contents: message,
-      config: {
-        systemInstruction: system_instruction,
-      }
+      systemInstruction: system_instruction,
     });
+    
+    const result = await model.generateContentStream(message);
 
-    for await (const chunk of result) {
-      const chunkText = chunk.text;
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
       if (chunkText) {
         res.write(chunkText);
       }
