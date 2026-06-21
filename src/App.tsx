@@ -551,6 +551,16 @@ export default function App() {
             title: 'Report Generated! 📄',
             message: 'Your personalized impact analysis has been downloaded successfully.'
           });
+          // Clear form data after download as per user request
+          setFormData({
+            electricity: '',
+            distance: '',
+            fuelType: 'Petrol',
+            dietType: 'Meat',
+            localSourced: '50',
+            distanceUnit: 'km',
+            carbonGoal: '400'
+          });
         } catch (err) {
           console.error('Inner PDF Error:', err);
           setAlert({
@@ -914,9 +924,21 @@ export default function App() {
                         'text-emerald-900 dark:text-emerald-500'
                       }`}>
                         <motion.span
-                          key={animatedScore}
-                          initial={{ opacity: 0.8 }}
-                          animate={{ opacity: 1 }}
+                          key={results?.totalScore} // Trigger pulse only when the final target score changes
+                          initial={{ scale: 1, filter: "brightness(1)" }}
+                          animate={{ 
+                            scale: [1, 1.05, 1],
+                            filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"],
+                            textShadow: [
+                              "0 0 0px rgba(0,0,0,0)",
+                              scoreTier === 'high' ? "0 0 20px rgba(239, 68, 68, 0.4)" : 
+                              scoreTier === 'medium' ? "0 0 20px rgba(245, 158, 11, 0.4)" : 
+                              "0 0 20px rgba(16, 185, 129, 0.4)",
+                              "0 0 0px rgba(0,0,0,0)"
+                            ]
+                          }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                          className="inline-block"
                         >
                           {animatedScore.toFixed(2)}
                         </motion.span>

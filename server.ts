@@ -72,11 +72,12 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader('Transfer-Encoding', 'chunked');
 
   try {
-    let systemInstruction = `You are EcoTrace AI, a sustainability consultant.
-    Your goal is to help users reduce their carbon footprint with facts.
-    - Use bullet points (•).
-    - Keep paragraphs short.
-    - Use markdown for bolding.`;
+    let systemInstruction = `You are EcoTrace AI. BE EXTREMELY CONCISE.
+    - RESPOND IMMEDIATELY with bullet points.
+    - NO introductions. NO conclusions.
+    - MAXIMUM speed: Get straight to the facts and advice.
+    - Use markdown for bolding key terms.
+    - Max 5-7 points total.`;
     
     if (context && context.totalScore) {
       systemInstruction += `\n\nContext: Monthly Footprint ${context.totalScore.toFixed(2)} kg CO2.
