@@ -680,24 +680,28 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <button 
+            <motion.button 
               onClick={handlePreviewReport}
+              whileHover={{ scale: 1.1, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
+              whileTap={{ scale: 0.95 }}
               className={`p-2 sm:p-2.5 rounded-xl transition-all group ${
                 !results 
                 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
               }`}
               title="Preview Report"
             >
-              <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110" />
-            </button>
-            <button 
+              <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform" />
+            </motion.button>
+            <motion.button 
               onClick={exportToPDF}
               disabled={isExporting}
+              whileHover={results ? { scale: 1.1, backgroundColor: 'rgba(16, 185, 129, 0.1)' } : {}}
+              whileTap={results ? { scale: 0.95 } : {}}
               className={`p-2 sm:p-2.5 rounded-xl transition-all group relative ${
                 !results 
                 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
               }`}
               aria-label="Download PDF Report"
               title="Download PDF Report"
@@ -705,29 +709,33 @@ export default function App() {
               {isExporting ? (
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Download className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform ${results ? 'group-hover:scale-110 group-active:scale-95' : ''}`} />
+                <Download className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform`} />
               )}
               {results && !isExporting && (
-                <span className="absolute top-0.5 right-0.5 sm:-top-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+                <span className="absolute top-0.5 right-0.5 sm:-top-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               )}
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
               type="button"
               onClick={(e) => { e.preventDefault(); toggleTheme(); }}
-              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all group"
+              whileHover={{ scale: 1.1, backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all group"
               aria-label="Toggle Theme"
             >
               {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
               onClick={handleDeployImpact}
-              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-[10px] xs:text-xs sm:text-sm hover:opacity-90 transition-all shadow-xl shadow-slate-200 dark:shadow-none active:scale-95"
+              whileHover={{ scale: 1.02, boxShadow: '0 20px 25px -5px rgba(16, 185, 129, 0.1), 0 8px 10px -6px rgba(16, 185, 129, 0.1)' }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-[10px] xs:text-xs sm:text-sm hover:opacity-90 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
             >
               <span className="sm:hidden flex items-center justify-center">
                 <ShieldCheck className="w-4 h-4" />
               </span>
               <span className="hidden sm:inline">Deploy Impact</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </nav>
@@ -813,13 +821,15 @@ export default function App() {
                   />
                 </div>
 
-                <button 
+                <motion.button 
                   type="submit" disabled={isCalculating}
-                  className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10"
                 >
                   {isCalculating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />}
                   Calculate Audit
-                </button>
+                </motion.button>
               </form>
             </div>
 
@@ -1367,9 +1377,31 @@ export default function App() {
                      </div>
                      
                      <div className="flex flex-col gap-8">
-                        <WaterTracker data={waterData} onUpdate={setWaterData} />
-                        <EWasteGuide />
-                        <GreenCareers />
+                        <motion.div 
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                        >
+                          <WaterTracker data={waterData} onUpdate={setWaterData} />
+                        </motion.div>
+                        
+                        <motion.div 
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <EWasteGuide />
+                        </motion.div>
+                        
+                        <motion.div 
+                          initial={{ opacity: 0, x: 20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <GreenCareers />
+                        </motion.div>
                      </div>
                   </section>
           </div>
@@ -1710,21 +1742,29 @@ export default function App() {
                   </div>
                 )}
                 {messages.map((m, idx) => (
-                  <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <motion.div 
+                    key={idx} 
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+                  >
                     <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] shadow-sm whitespace-pre-wrap leading-relaxed ${
                       m.role === 'user' 
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium rounded-tr-none' 
                       : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700'
                     }`}>
                       {m.isLoading ? (
-                        <div className="flex gap-1 py-1">
-                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
+                        <div className="flex gap-1.5 py-1.5 items-center">
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 animate-pulse">Analyzing</span>
+                          <div className="flex gap-1">
+                            <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                            <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce" />
+                          </div>
                         </div>
                       ) : m.text}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 <div ref={chatEndRef} />
               </div>
