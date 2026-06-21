@@ -46,6 +46,22 @@ app.use((req, res, next) => {
 
 app.post("/api/calculate", (req, res) => {
   try {
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ success: false, error: "Missing environmental payload" });
+    }
+
+    const electricityState = req.body.electricity !== undefined && req.body.electricity !== "" ? parseFloat(req.body.electricity) : null;
+    const distanceState = req.body.distance !== undefined && req.body.distance !== "" ? parseFloat(req.body.distance) : null;
+    const localSourcedState = req.body.localSourced !== undefined && req.body.localSourced !== "" ? parseFloat(req.body.localSourced) : null;
+
+    if (
+      (electricityState !== null && !isNaN(electricityState) && electricityState < 0) ||
+      (distanceState !== null && !isNaN(distanceState) && distanceState < 0) ||
+      (localSourcedState !== null && !isNaN(localSourcedState) && localSourcedState < 0)
+    ) {
+      return res.status(400).json({ success: false, error: "Metrics validation error: Negative values are not permitted." });
+    }
+
     const data = calculateCarbonFootprint(req.body);
     res.json({ success: true, data });
   } catch (error) {
