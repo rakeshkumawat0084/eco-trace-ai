@@ -4,7 +4,7 @@ import {
   SendHorizontal, Moon, Sun, Download, Image as ImageIcon, FileText,
   Share2, Save, Trash2, ShieldCheck, Trophy, Anchor, 
   AlertCircle, AlertTriangle, Users, X, Copy, ChevronRight,
-  TrendingUp, TrendingDown
+  TrendingUp, TrendingDown, Bot, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import html2pdf from 'html2pdf.js';
@@ -66,6 +66,7 @@ interface AuditRecord {
 
 export default function App() {
   // State
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [waterData, setWaterData] = useState({
     showerMinutes: '',
     roWaste: '',
@@ -1635,6 +1636,150 @@ export default function App() {
            </motion.div>
         </div>
       )}
+
+      {/* Floating AI Agent - persistent across all views */}
+      <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-4">
+        <AnimatePresence>
+          {isAgentOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.9, transformOrigin: 'bottom right' }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              className="bg-white dark:bg-slate-900 w-[calc(100vw-2rem)] sm:w-[400px] h-[550px] sm:h-[600px] rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col mb-2 ring-1 ring-slate-200/50 dark:ring-slate-700/50"
+            >
+              {/* Agent Header */}
+              <div className="p-6 bg-slate-900 dark:bg-slate-950 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">EcoTrace Analyst</h3>
+                    <div className="flex items-center gap-1.5 leading-none mt-1">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Assistant</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setMessages([])}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white"
+                    title="Clear Chat"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => setIsAgentOpen(false)}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 dark:bg-slate-900/50 scroll-smooth">
+                {messages.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center shadow-sm">
+                      <Sparkles className="w-8 h-8 text-emerald-500 opacity-40" />
+                    </div>
+                    <div>
+                      <p className="text-slate-900 dark:text-white font-bold text-sm">Hello! I'm your EcoTrace Agent.</p>
+                      <p className="text-slate-400 text-xs mt-1">Ask me anything about carbon reduction or sustainability strategies.</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 w-full pt-4">
+                      {[
+                        "How to reduce my energy bill?",
+                        "Best diet for low CO2?",
+                        "Is my commute efficient?"
+                      ].map((hint, i) => (
+                        <button 
+                          key={i}
+                          onClick={() => {
+                            setChatInput(hint);
+                            // handleChatSubmit will be triggered manually by user to ensure they see what's being sent
+                          }}
+                          className="text-[10px] font-black uppercase tracking-widest p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl text-slate-500 hover:border-emerald-500 hover:text-emerald-500 transition-all text-left"
+                        >
+                          {hint}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {messages.map((m, idx) => (
+                  <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] shadow-sm whitespace-pre-wrap leading-relaxed ${
+                      m.role === 'user' 
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium rounded-tr-none' 
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700'
+                    }`}>
+                      {m.isLoading ? (
+                        <div className="flex gap-1 py-1">
+                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
+                        </div>
+                      ) : m.text}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Chat Input */}
+              <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                <form onSubmit={handleChatSubmit} className="flex gap-2">
+                  <input 
+                    type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Message the agent..." 
+                    className="flex-1 px-5 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none text-sm dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!chatInput.trim()}
+                    className="bg-slate-900 dark:bg-white dark:text-slate-900 text-white p-3.5 rounded-2xl hover:opacity-90 transition-all disabled:opacity-50 disabled:grayscale"
+                  >
+                    <SendHorizontal className="w-5 h-5" />
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toggle Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsAgentOpen(!isAgentOpen)}
+          className={`relative group p-4 rounded-3xl shadow-2xl transition-all duration-500 overflow-hidden ${
+            isAgentOpen 
+            ? 'bg-rose-500 text-white rotate-90' 
+            : 'bg-emerald-600 text-white hover:bg-emerald-500'
+          }`}
+        >
+          <AnimatePresence mode="wait">
+            {isAgentOpen ? (
+              <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+                <X className="w-7 h-7" />
+              </motion.div>
+            ) : (
+              <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} className="flex items-center gap-3">
+                <Bot className="w-7 h-7" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-500 font-black uppercase text-[10px] tracking-widest px-0 group-hover:pl-2">
+                  Eco Agent
+                </span>
+                {!isAgentOpen && (
+                  <span className="absolute inset-0 rounded-full animate-ping bg-emerald-400 opacity-20 pointer-events-none" />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      </div>
     </div>
   );
 }
