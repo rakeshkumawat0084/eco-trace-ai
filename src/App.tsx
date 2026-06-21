@@ -66,6 +66,29 @@ interface AuditRecord {
 
 export default function App() {
   // State
+  const [waterData, setWaterData] = useState({
+    showerMinutes: '',
+    roWaste: '',
+    washingMachine: '2',
+    dietType: 'omnivore'
+  });
+
+  const calculateDirectWater = () => {
+    const shower = (parseFloat(waterData.showerMinutes) || 0) * 12 * 30; // 12L per min
+    const ro = (parseFloat(waterData.roWaste) || 0) * 30; // Liters per day * 30
+    const washing = (parseFloat(waterData.washingMachine) || 0) * 100 * 4; // 100L per load * 4 weeks
+    return shower + ro + washing;
+  };
+
+  const calculateVirtualWater = () => {
+    const dietImpact: Record<string, number> = {
+      omnivore: 150000,
+      vegetarian: 90000,
+      vegan: 60000
+    };
+    return dietImpact[waterData.dietType] || 0;
+  };
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return localStorage.getItem('ecoTraceTheme') as 'light' | 'dark' || 'light';
   });
@@ -1343,7 +1366,7 @@ export default function App() {
                      </div>
                      
                      <div className="flex flex-col gap-8">
-                        <WaterTracker />
+                        <WaterTracker data={waterData} onUpdate={setWaterData} />
                         <EWasteGuide />
                         <GreenCareers />
                      </div>
@@ -1444,32 +1467,54 @@ export default function App() {
           <div className="grid grid-cols-2 gap-8 mb-12" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
             <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
                <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Water Conservation</h3>
-               <p className="text-xs leading-relaxed" style={{ color: '#64748b', fontSize: '12px' }}>
-                 Water Conservation roadmap active. Projected savings: 15% through optimized RO waste routing.
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a' }}>{calculateDirectWater().toLocaleString()}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b' }}>Litres / mo</span>
+               </div>
+               <p className="text-xs leading-relaxed" style={{ color: '#64748b', fontSize: '11px' }}>
+                 Your hydrological footprint is {calculateDirectWater() > 4500 ? 'above' : 'within'} sustainable benchmarks. {calculateDirectWater() > 4500 ? 'Aerators and RO waste reuse are prioritized.' : 'Efficiency maintained across variables.'}
                </p>
             </div>
             <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
-               <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Career Strategy</h3>
-               <p className="text-xs leading-relaxed" style={{ color: '#64748b', fontSize: '12px' }}>
-                 Recommended Skill Focus: Carbon Accounting & ESG Compliance.
-               </p>
+               <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Circular Economy</h3>
+               <div className="space-y-1">
+                 <p style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Compliance Protocol:</p>
+                 <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
+                    <p style={{ fontSize: '10px', color: '#64748b' }}>Authorized E-Gate facility routing</p>
+                 </div>
+                 <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
+                    <p style={{ fontSize: '10px', color: '#64748b' }}>Data sanitation (NIST standards)</p>
+                 </div>
+               </div>
             </div>
           </div>
 
           <div 
-            className="p-10 text-white rounded-[3rem] relative overflow-hidden"
-            style={{ backgroundColor: '#0f172a' }}
+            className="p-10 text-white rounded-[3rem] relative overflow-hidden mb-8"
+            style={{ backgroundColor: '#0f172a', marginBottom: '32px' }}
           >
              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-4">EcoTrace AI Recommendation</h3>
-                <p className="text-sm leading-relaxed max-w-lg" style={{ color: '#94a3b8' }}>
-                  Your current consumption patterns suggest a high potential for optimization. By implementing the current roadmap generated by the Sustainability Catalyst engine, you are on track to exceed global sustainability benchmarks.
-                </p>
+                <h3 className="text-xl font-bold mb-4" style={{ color: '#ffffff' }}>EcoTrace Advisor Strategic Roadmap</h3>
+                <div className="text-sm leading-relaxed" style={{ color: '#94a3b8', fontSize: '13px' }}>
+                   {messages.filter(m => m.role === 'ai').length > 0 
+                     ? messages.filter(m => m.role === 'ai').slice(-1)[0].text 
+                     : "Your carbon audit data indicates significant opportunities for reduction. Prioritize high-impact shifts such as transitioning to renewable energy providers and local sourcing to decrease transport logistics emissions. Generate a specific roadmap for targeted advice."
+                   }
+                </div>
              </div>
              <Zap className="absolute -bottom-4 -right-4 w-32 h-32 opacity-10" style={{ color: '#10b981' }} />
           </div>
 
-          <div className="mt-16 pt-8 flex justify-between items-center" style={{ borderTop: '1px solid #f1f5f9' }}>
+          <div>
+             <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Audit Methodology</h3>
+             <p className="text-[9px] leading-relaxed" style={{ color: '#cbd5e1' }}>
+                This report is generated via the EcoTrace AI Analysis Engine using IPCC Tier 1 emission factors and Gemini Flash inference logic. All calculations are baseline estimates subject to variable grid intensity factors.
+             </p>
+          </div>
+
+        <div className="mt-16 pt-8 flex justify-between items-center" style={{ borderTop: '1px solid #f1f5f9' }}>
             <div className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: '#cbd5e1' }}>Official AI-Certified Analysis</div>
             <div className="text-[8px] font-black uppercase tracking-[0.3em]" style={{ color: '#cbd5e1' }}>EcoTrace.io/Verify</div>
           </div>

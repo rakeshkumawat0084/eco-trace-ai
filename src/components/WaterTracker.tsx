@@ -2,20 +2,13 @@ import React, { useState } from 'react';
 import { Droplets, Info, TrendingDown, Coffee, Beef, Shirt } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export const WaterTracker = () => {
-  const [waterData, setWaterData] = useState({
-    showerMinutes: '',
-    roWaste: '',
-    washingMachine: '2', // loads per week
-    dietType: 'omnivore' // omnivore, vegetarian, vegan
-  });
-
+export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any) => void }) => {
   const [showVirtual, setShowVirtual] = useState(false);
 
   const calculateDirectWater = () => {
-    const shower = (parseFloat(waterData.showerMinutes) || 0) * 12 * 30; // 12L per min
-    const ro = (parseFloat(waterData.roWaste) || 0) * 30; // Liters per day * 30
-    const washing = (parseFloat(waterData.washingMachine) || 0) * 100 * 4; // 100L per load * 4 weeks
+    const shower = (parseFloat(data.showerMinutes) || 0) * 12 * 30; // 12L per min
+    const ro = (parseFloat(data.roWaste) || 0) * 30; // Liters per day * 30
+    const washing = (parseFloat(data.washingMachine) || 0) * 100 * 4; // 100L per load * 4 weeks
     return shower + ro + washing;
   };
 
@@ -26,7 +19,7 @@ export const WaterTracker = () => {
       vegetarian: 90000, // Roughly 3000L/day
       vegan: 60000     // Roughly 2000L/day
     };
-    return dietImpact[waterData.dietType as keyof typeof dietImpact];
+    return dietImpact[data.dietType as keyof typeof dietImpact];
   };
 
   const directWater = calculateDirectWater();
@@ -64,8 +57,8 @@ export const WaterTracker = () => {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Daily Shower (Min)</label>
             <input 
               type="number" 
-              value={waterData.showerMinutes}
-              onChange={(e) => setWaterData({...waterData, showerMinutes: e.target.value})}
+              value={data.showerMinutes}
+              onChange={(e) => onUpdate({...data, showerMinutes: e.target.value})}
               placeholder="e.g. 10"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
             />
@@ -74,8 +67,8 @@ export const WaterTracker = () => {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">RO Waste (L/day)</label>
             <input 
               type="number" 
-              value={waterData.roWaste}
-              onChange={(e) => setWaterData({...waterData, roWaste: e.target.value})}
+              value={data.roWaste}
+              onChange={(e) => onUpdate({...data, roWaste: e.target.value})}
               placeholder="e.g. 15"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
             />
@@ -88,9 +81,9 @@ export const WaterTracker = () => {
             {['vegan', 'vegetarian', 'omnivore'].map((type) => (
               <button
                 key={type}
-                onClick={() => setWaterData({...waterData, dietType: type})}
+                onClick={() => onUpdate({...data, dietType: type})}
                 className={`py-2 rounded-xl text-[9px] font-bold uppercase transition-all border ${
-                  waterData.dietType === type 
+                  data.dietType === type 
                   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shadow-sm' 
                   : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'
                 }`}
