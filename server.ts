@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
+import { calculateCarbonFootprint } from "./src/lib/calculations";
+
 dotenv.config();
 
 const app = express();
@@ -15,45 +17,32 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || "",
 });
 
-// Carbon Calculation Logic
-const ELECTRICITY_FACTOR = 0.385; // kg CO2 per kWh
-const TRANSPORT_FACTORS: Record<string, number> = {
-  Petrol: 0.17,
-  Diesel: 0.15,
-  EV: 0.05,
-};
-const DIET_FACTORS: Record<string, number> = {
-  Meat: 250,
-  Vegetarian: 150,
-  Vegan: 100,
-};
+// Secure input validation middleware to ensure High-Fidelity processing
+function validateMetrics(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const metrics = req.body;
+  if (!metrics || Object.keys(metrics).length === 0) {
+      return res.status(400).json({ error: "Missing environmental payload metrics structure." });
+  }
+  
+  const electricity = parseFloat(metrics.electricity);
+  const transport = parseFloat(metrics.distance);
+  
+  if ((metrics.electricity && (isNaN(electricity) || electricity < 0)) || 
+      (metrics.distance && (isNaN(transport) || transport < 0))) {
+      return res.status(400).json({ error: "Metrics validation error: Numerical values must be non-negative numbers." });
+  }
+  next();
+}
 
 // --- API ROUTES ---
 
-app.post("/api/calculate", (req, res) => {
-  const { electricity, distance, fuelType, dietType, distanceUnit, localSourced } = req.body;
-
+app.post("/api/calculate", validateMetrics, (req, res) => {
   try {
-    const electricityScore = (parseFloat(electricity) || 0) * ELECTRICITY_FACTOR;
-    let dist = parseFloat(distance) || 0;
-    if (distanceUnit === "mi") dist = dist * 1.60934;
-    
-    const transportScore = dist * (TRANSPORT_FACTORS[fuelType] || 0.17) * 4.33;
-    const baseDietScore = DIET_FACTORS[dietType] || 250;
-    const sourcingFactor = 1 - ((parseFloat(localSourced) || 50) / 100) * 0.15;
-    const dietScore = baseDietScore * sourcingFactor;
-
-    const totalScore = electricityScore + transportScore + dietScore;
+    const data = calculateCarbonFootprint(req.body);
 
     res.json({
       success: true,
-      data: {
-        electricityScore,
-        transportScore,
-        dietScore,
-        totalScore,
-        breakdown: { electricity: electricityScore, transport: transportScore, diet: dietScore },
-      },
+      data,
     });
   } catch (error) {
     res.status(400).json({ success: false, error: "Invalid input" });
@@ -72,13 +61,16 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader('Transfer-Encoding', 'chunked');
 
   try {
-    let systemInstruction = `You are EcoTrace AI, a master sustainability consultant and carbon analyst. 
-    Your goal is to provide high-accuracy, data-driven advice to help users reduce their carbon footprint.
-    - Be professional, encouraging, and extremely knowledgeable.
-    - Provide specific, actionable strategies based on the provided metrics.
-    - Use clear markdown: **bold** key terms, use bullet points (•), and keep sections distinct.
-    - If the user asks general questions, provide scientific facts about climate change and sustainability.
-    - Keep responses concise but comprehensive enough to be truly useful.`;
+    let systemInstruction = `You are EcoTrace AI, an elite environmental consultant and sustainability agent. 
+    Your goal is to provide high-fidelity, actionable roadmap directives to help users reduce their carbon footprint.
+    
+    Guidelines:
+    1. Actively reference the provided user metrics (Energy, Transport, Diet) in your recommendations.
+    2. Be highly professional, actionable, and structured.
+    3. Keep solutions practical but scientifically grounded.
+    4. Use markdown: **bold** key terms, use bullet points (•), and keep sections distinct.
+    5. If the user asks general questions, provide facts about climate change and sustainability.
+    6. Maintain a supportive yet authoritative tone.`;
     
     if (context && context.totalScore) {
       systemInstruction += `\n\nContext: Monthly Footprint ${context.totalScore.toFixed(2)} kg CO2.

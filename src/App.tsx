@@ -24,6 +24,7 @@ import { Footer } from './components/ui/footer-section';
 import { WaterTracker } from './components/WaterTracker';
 import { EWasteGuide } from './components/EWasteGuide';
 import { GreenCareers } from './components/GreenCareers';
+import { calculateDirectWater, calculateVirtualWater, MITIGATION_TASKS } from './lib/calculations';
 import SkeletonResultDashboard from './components/SkeletonResultDashboard';
 
 // Register Chart.js components
@@ -74,21 +75,8 @@ export default function App() {
     dietType: 'omnivore'
   });
 
-  const calculateDirectWater = () => {
-    const shower = (parseFloat(waterData.showerMinutes) || 0) * 12 * 30; // 12L per min
-    const ro = (parseFloat(waterData.roWaste) || 0) * 30; // Liters per day * 30
-    const washing = (parseFloat(waterData.washingMachine) || 0) * 100 * 4; // 100L per load * 4 weeks
-    return shower + ro + washing;
-  };
-
-  const calculateVirtualWater = () => {
-    const dietImpact: Record<string, number> = {
-      omnivore: 150000,
-      vegetarian: 90000,
-      vegan: 60000
-    };
-    return dietImpact[waterData.dietType] || 0;
-  };
+  const waterFootprint = calculateDirectWater(waterData);
+  const virtualWaterFootprint = calculateVirtualWater(waterData.dietType);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return localStorage.getItem('ecoTraceTheme') as 'light' | 'dark' || 'light';
@@ -117,7 +105,7 @@ export default function App() {
     solar: false
   });
   
-  const [activeTasks, setActiveTasks] = useState<number[]>([]);
+  const [activeTasks, setActiveTasks] = useState<string[]>([]);
   const [joinedChallenges, setJoinedChallenges] = useState<string[]>([]);
   const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -196,12 +184,8 @@ export default function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Constants
-  const tasks = [
-    { id: 1, label: "Switch to public transport today", reduction: 15 },
-    { id: 2, label: "Unplug idle electronics", reduction: 5 },
-    { id: 3, label: "Meatless day challenge", reduction: 10 }
-  ];
+  // Scenarios/Tasks
+  const tasks = MITIGATION_TASKS;
 
   // Effects
   useEffect(() => {
@@ -426,7 +410,7 @@ export default function App() {
     setActiveScenarios(prev => ({ ...prev, [type]: !prev[type] }));
   };
 
-  const toggleTask = (id: number) => {
+  const toggleTask = (id: string) => {
     setActiveTasks(prev => 
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     );
@@ -620,9 +604,9 @@ export default function App() {
   };
 
   const getBadgeConfig = (score: number) => {
-    if (score < 150) return { label: 'Green Legend', icon: <Trophy className="w-3 h-3"/>, classes: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
-    if (score <= 400) return { label: 'Eco Balancer', icon: <Anchor className="w-3 h-3"/>, classes: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
-    return { label: 'Carbon Consumer', icon: <AlertCircle className="w-3 h-3"/>, classes: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+    if (score < 150) return { label: 'Green Legend Certified Status', icon: '🟩', classes: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" };
+    if (score <= 400) return { label: 'Eco Balancer Profile', icon: '🟨', classes: "bg-amber-500/10 text-amber-400 border border-amber-500/20" };
+    return { label: 'Carbon Consumer Profile', icon: '🟥', classes: "bg-red-500/10 text-red-400 border border-red-500/20" };
   };
 
   const handleDeployImpact = () => {
@@ -690,6 +674,7 @@ export default function App() {
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
               }`}
               title="Preview Report"
+              aria-label="Preview sustainability report"
             >
               <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 transition-transform" />
             </motion.button>
@@ -730,6 +715,7 @@ export default function App() {
               whileHover={{ scale: 1.02, boxShadow: '0 20px 25px -5px rgba(16, 185, 129, 0.1), 0 8px 10px -6px rgba(16, 185, 129, 0.1)' }}
               whileTap={{ scale: 0.98 }}
               className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-[10px] xs:text-xs sm:text-sm hover:opacity-90 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
+              aria-label="Deploy sustainability impact strategy"
             >
               <span className="sm:hidden flex items-center justify-center">
                 <ShieldCheck className="w-4 h-4" />
@@ -755,24 +741,26 @@ export default function App() {
 
               <form onSubmit={calculateFootprint} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Monthly Electricity (kWh)</label>
+                  <label htmlFor="electricity" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Monthly Electricity (kWh)</label>
                   <input 
                     type="number" id="electricity" value={formData.electricity} onChange={handleInputChange}
                     placeholder="e.g. 250" className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white transition-all"
+                    aria-label="Monthly electricity usage in kilowatt hours"
                   />
                 </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Distance</label>
+                      <label htmlFor="distance" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Distance</label>
                       <input 
                         type="number" id="distance" value={formData.distance} onChange={handleInputChange}
                         placeholder="e.g. 400" className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white transition-all text-sm"
+                        aria-label="Travel distance"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Unit</label>
-                      <select id="distanceUnit" value={formData.distanceUnit} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white text-sm">
+                      <label htmlFor="distanceUnit" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Unit</label>
+                      <select id="distanceUnit" value={formData.distanceUnit} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white text-sm" aria-label="Distance unit">
                         <option value="km">KM</option>
                         <option value="mi">Miles</option>
                       </select>
@@ -780,8 +768,8 @@ export default function App() {
                   </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Vehicle Fuel Type</label>
-                  <select id="fuelType" value={formData.fuelType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white">
+                  <label htmlFor="fuelType" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Vehicle Fuel Type</label>
+                  <select id="fuelType" value={formData.fuelType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" aria-label="Vehicle fuel type">
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
                     <option value="EV">Electric Vehicle</option>
@@ -789,8 +777,8 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Dietary Lifestyle</label>
-                  <select id="dietType" value={formData.dietType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white">
+                  <label htmlFor="dietType" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Dietary Lifestyle</label>
+                  <select id="dietType" value={formData.dietType} onChange={handleInputChange} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white" aria-label="Dietary lifestyle">
                     <option value="Meat">Omnivore (Meat Eater)</option>
                     <option value="Vegetarian">Vegetarian</option>
                     <option value="Vegan">Vegan</option>
@@ -799,13 +787,14 @@ export default function App() {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Food Sourcing</label>
+                    <label htmlFor="localSourced" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Food Sourcing</label>
                     <span className="text-xs font-bold text-emerald-600">{formData.localSourced}% Local</span>
                   </div>
                   <input 
                     type="range" id="localSourced" min="0" max="100" step="5"
                     value={formData.localSourced} onChange={handleInputChange}
                     className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                    aria-label="Local sourcing percentage"
                   />
                   <div className="flex justify-between mt-1">
                     <span className="text-[10px] text-slate-400 font-medium">100% Imported</span>
@@ -814,10 +803,11 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Carbon Monthly Goal (kg)</label>
+                  <label htmlFor="carbonGoal" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Carbon Monthly Goal (kg)</label>
                   <input 
                     type="number" id="carbonGoal" value={formData.carbonGoal} onChange={handleInputChange}
                     placeholder="400" className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 dark:bg-slate-800 dark:text-white transition-all"
+                    aria-label="Monthly carbon emission goal"
                   />
                 </div>
 
@@ -826,6 +816,7 @@ export default function App() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10"
+                  aria-label="Calculate sustainability audit footprint"
                 >
                   {isCalculating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />}
                   Calculate Audit
@@ -889,14 +880,12 @@ export default function App() {
               
               <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto pr-1 scrollbar-hide">
                 {history.length > 0 ? history.map((record, idx) => (
-                  <div key={idx} className="p-2 sm:p-3 border border-slate-50 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group">
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="text-[11px] sm:text-xs font-bold dark:text-white shrink-0">{record.totalScore.toFixed(1)} kg</span>
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 truncate">{record.timestamp}</span>
-                    </div>
+                  <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 transition-all duration-300">
+                    <span className="text-[10px] text-slate-400 font-medium">⏱️ Captured Instance at {record.timestamp.split(',')[1]}</span>
+                    <span className="text-[11px] font-mono font-bold text-emerald-600">{record.totalScore.toFixed(1)} kg CO₂</span>
                   </div>
                 )) : (
-                  <p className="text-xs text-slate-400 italic">No records yet.</p>
+                  <p className="text-xs text-slate-400 italic text-center py-4">No historical data recorded yet.</p>
                 )}
               </div>
             </div>
@@ -1031,7 +1020,7 @@ export default function App() {
                           scoreTier === 'high' ? 'text-red-700 dark:text-red-400' :
                           scoreTier === 'medium' ? 'text-amber-700 dark:text-amber-400' :
                           'text-emerald-700 dark:text-emerald-400'
-                        }`}>
+                        }`} aria-label="Share your sustainability impact scorecard">
                           <Share2 className="w-3.5 h-3.5" /> Share
                         </button>
                       </div>
@@ -1149,33 +1138,42 @@ export default function App() {
                     }}
                     className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800"
                   >
-                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                       <Zap className="w-3 h-3 text-emerald-500" /> Active Reduction Tasks
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                       ⚡ Active Simulated Mitigation Actions
                     </h4>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                        {tasks.map(task => (
                           <div 
                              key={task.id} 
+                             role="button"
+                             tabIndex={0}
+                             aria-label={`Toggle mitigation task: ${task.label}`}
                              onClick={() => toggleTask(task.id)}
-                             className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${
+                             onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                   e.preventDefault();
+                                   toggleTask(task.id);
+                                }
+                             }}
+                             className={`flex items-center gap-3.5 p-4 rounded-3xl border transition-all cursor-pointer group ${
                                 activeTasks.includes(task.id) 
                                 ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' 
                                 : 'bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-800 hover:border-emerald-500/30'
                              }`}
                           >
-                             <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                             <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
                                 activeTasks.includes(task.id) 
-                                ? 'bg-emerald-600 border-emerald-600 text-white' 
-                                : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700'
+                                ? 'bg-emerald-600 border-emerald-600' 
+                                : 'border-slate-300 dark:border-slate-600'
                              }`}>
-                                {activeTasks.includes(task.id) && <ShieldCheck className="w-3.5 h-3.5" />}
+                                {activeTasks.includes(task.id) && <ShieldCheck className="w-3 h-3 text-white" />}
                              </div>
-                             <span className={`text-sm flex-1 font-medium transition-colors ${activeTasks.includes(task.id) ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-600 dark:text-slate-400'}`}>
-                                {task.label}
-                             </span>
-                             <span className="text-[10px] font-black text-emerald-600 bg-emerald-100/50 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
-                                -{task.reduction}kg
-                             </span>
+                             <div className="flex-1">
+                                <p className={`text-[11px] font-bold leading-tight ${activeTasks.includes(task.id) ? 'text-emerald-900 dark:text-emerald-100' : 'text-slate-600 dark:text-slate-300'}`}>
+                                   {task.label}
+                                </p>
+                                <p className="text-[9px] font-bold text-emerald-600 mt-1 uppercase tracking-wider">-{task.reduction}kg CO₂ Adjustment</p>
+                             </div>
                           </div>
                        ))}
                     </div>
@@ -1213,6 +1211,7 @@ export default function App() {
                                    ? 'bg-emerald-600 border-emerald-400' 
                                    : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
                                 }`}
+                                aria-label={`Toggle simulation scenario: ${scen.label}`}
                               >
                                  <div className="flex justify-between items-center mb-2">
                                     <span className="text-white font-bold text-sm">{scen.label}</span>
@@ -1230,7 +1229,7 @@ export default function App() {
                               <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Projected Future Score</p>
                               <p className="text-2xl font-black text-white">{projectedScore.toFixed(2)} kg <span className="text-emerald-500 text-xs">(-{savingsPercent}%)</span></p>
                            </div>
-                           <button onClick={resetScenarios} className="text-slate-500 text-xs font-bold hover:text-white transition-all uppercase tracking-widest">Reset</button>
+                           <button onClick={resetScenarios} className="text-slate-500 text-xs font-bold hover:text-white transition-all uppercase tracking-widest" aria-label="Reset all what-if simulation scenarios">Reset</button>
                         </div>
                       </div>
                    </motion.div>
@@ -1306,8 +1305,9 @@ export default function App() {
                           type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                           placeholder="Ask about reduction strategies..." 
                           className="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none text-sm dark:text-white"
+                          aria-label="Ask about carbon reduction strategies"
                         />
-                        <button type="submit" className="bg-emerald-600 text-white p-3 rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-none">
+                        <button type="submit" className="bg-emerald-600 text-white p-3 rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 dark:shadow-none" aria-label="Send message to AI assistant">
                           <SendHorizontal className="w-5 h-5" />
                         </button>
                       </form>
@@ -1446,15 +1446,15 @@ export default function App() {
             >
               <div>
                 <h2 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '16px' }}>Baseline Footprint</h2>
-                <p className="text-5xl font-black tabular-nums" style={{ color: '#0f172a', fontSize: '48px', fontWeight: 900 }}>{results?.totalScore.toFixed(2)} kg</p>
-                <p className="text-[10px] font-bold mt-1 uppercase tracking-tighter" style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', marginTop: '4px' }}>CO2 equivalent per month</p>
+                <p className="text-5xl font-black tabular-nums" style={{ color: '#0f172a', fontSize: '48px', fontWeight: 900 }}>{finalScore.toFixed(2)} kg</p>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-tighter" style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', marginTop: '4px' }}>Mitigated monthly CO₂ equivalent</p>
               </div>
               <div className="mt-8" style={{ marginTop: '32px' }}>
                 <div 
                   className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-full text-xs font-black uppercase tracking-widest"
                   style={{ backgroundColor: '#059669', color: '#ffffff', padding: '8px 16px', borderRadius: '9999px', fontSize: '12px', fontWeight: 900, display: 'inline-flex', alignItems: 'center' }}
                 >
-                  {badge?.label || 'Analysed'}
+                  {getBadgeConfig(finalScore).label}
                 </div>
               </div>
             </div>
@@ -1463,15 +1463,26 @@ export default function App() {
               style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
             >
               <div>
-                <h2 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '16px' }}>Collective Effort</h2>
-                <p className="text-3xl font-black" style={{ color: '#0f172a', fontSize: '30px', fontWeight: 900 }}>{joinedChallenges.length} Active</p>
-                <p className="text-[10px] font-bold mt-1 uppercase tracking-tighter" style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', marginTop: '4px' }}>
-                  {joinedChallenges.length > 0 
-                    ? `${joinedChallenges.length} community efforts` 
-                    : 'No active community challenges'}
-                </p>
+                <h2 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '16px' }}>Mitigation Roadmap</h2>
+                <div className="space-y-2">
+                   {activeTasks.length > 0 ? (
+                     tasks.filter(t => activeTasks.includes(t.id)).map(t => (
+                       <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#10b981' }}>✓</span>
+                          <span style={{ fontSize: '10px', color: '#475569', fontWeight: 700 }}>{t.label}</span>
+                       </div>
+                     ))
+                   ) : (
+                     <p style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic' }}>No active reduction tasks selected.</p>
+                   )}
+                </div>
               </div>
               <div className="mt-8 pt-6" style={{ borderTop: '1px solid #e2e8f0', marginTop: '32px', paddingTop: '24px' }}>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-tighter" style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  {joinedChallenges.length > 0 
+                    ? `${joinedChallenges.length} community efforts active` 
+                    : 'No active community challenges'}
+                </p>
                 <p className="text-[10px] font-medium leading-relaxed italic" style={{ color: '#64748b', fontSize: '10px', fontStyle: 'italic' }}>
                   "Community-driven reduction initiatives amplify individual impact by 3.4x average."
                 </p>
@@ -1497,31 +1508,38 @@ export default function App() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 mb-12" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-            <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
-               <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Water Conservation</h3>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a' }}>{calculateDirectWater().toLocaleString()}</span>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b' }}>Litres / mo</span>
+          <div style={{ marginBottom: '40px' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <span style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }}></span>
+                <span style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Beyond Carbon: Eco-Action Hub</span>
+                <span style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }}></span>
+             </div>
+             <div className="grid grid-cols-2 gap-8 mb-12" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+               <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Water Conservation</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                     <span style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a' }}>{waterFootprint.toLocaleString()}</span>
+                     <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b' }}>Litres / mo</span>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: '#64748b', fontSize: '11px' }}>
+                    Your hydrological footprint is {waterFootprint > 4500 ? 'above' : 'within'} sustainable benchmarks. {waterFootprint > 4500 ? 'Aerators and RO waste reuse are prioritized.' : 'Efficiency maintained across variables.'}
+                  </p>
                </div>
-               <p className="text-xs leading-relaxed" style={{ color: '#64748b', fontSize: '11px' }}>
-                 Your hydrological footprint is {calculateDirectWater() > 4500 ? 'above' : 'within'} sustainable benchmarks. {calculateDirectWater() > 4500 ? 'Aerators and RO waste reuse are prioritized.' : 'Efficiency maintained across variables.'}
-               </p>
-            </div>
-            <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
-               <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Circular Economy</h3>
-               <div className="space-y-1">
-                 <p style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Compliance Protocol:</p>
-                 <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
-                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
-                    <p style={{ fontSize: '10px', color: '#64748b' }}>Authorized E-Gate facility routing</p>
-                 </div>
-                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
-                    <p style={{ fontSize: '10px', color: '#64748b' }}>Data sanitation (NIST standards)</p>
-                 </div>
+               <div className="p-8 rounded-[2.5rem]" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '32px', borderRadius: '40px' }}>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 900 }}>Circular Economy</h3>
+                  <div className="space-y-1">
+                    <p style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>Compliance Protocol:</p>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                       <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
+                       <p style={{ fontSize: '10px', color: '#64748b' }}>Authorized E-Gate facility routing</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                       <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginTop: '6px' }}></div>
+                       <p style={{ fontSize: '10px', color: '#64748b' }}>Data sanitation (NIST standards)</p>
+                    </div>
+                  </div>
                </div>
-            </div>
+             </div>
           </div>
 
           <div 

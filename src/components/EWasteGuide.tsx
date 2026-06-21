@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, Smartphone, Battery, Package, ArrowRight, CheckCircle2, AlertTriangle, Monitor, Tv } from 'lucide-react';
+import { motion } from 'motion/react';
 
 const categories = [
   { 
@@ -45,18 +46,21 @@ export const EWasteGuide = () => {
 
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-6">
         {categories.map((cat) => (
-          <button
+          <motion.button
             key={cat.id}
             onClick={() => setSelected(cat)}
+            whileHover={{ scale: 1.02, backgroundColor: selected.id === cat.id ? undefined : 'rgba(241, 245, 249, 1)' }}
+            whileTap={{ scale: 0.98 }}
             className={`p-2 sm:p-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1.5 sm:gap-2 ${
               selected.id === cat.id 
               ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' 
-              : 'bg-slate-50 border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-400 hover:border-slate-300'
+              : 'bg-slate-50 border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-400 hover:border-slate-300 shadow-sm hover:shadow-md'
             }`}
+            aria-label={`Select e-waste category: ${cat.name}`}
           >
             {React.cloneElement(cat.icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5 shrink-0' })}
             <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tighter text-center leading-tight">{cat.name.split('/')[0]}</span>
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -88,7 +92,7 @@ export const EWasteGuide = () => {
 
       <div className="mt-4 flex justify-between items-center px-1">
          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">Global Compliance Standard</span>
-         <button className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hover:underline">Verify Local Center</button>
+         <button className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hover:underline" aria-label="Verify your nearest local e-waste disposal center">Verify Local Center</button>
       </div>
     </div>
   );

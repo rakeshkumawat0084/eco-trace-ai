@@ -46,6 +46,7 @@ export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any)
           className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
             showVirtual ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
           }`}
+          aria-label={showVirtual ? 'Disable virtual water visualization' : 'Enable virtual water visualization'}
         >
           {showVirtual ? 'Virtual Water ON' : 'Show Virtual Water'}
         </button>
@@ -54,23 +55,27 @@ export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any)
       <div className="space-y-4 flex-grow overflow-x-hidden">
         <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Daily Shower (Min)</label>
+            <label htmlFor="showerMinutes" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Daily Shower (Min)</label>
             <input 
               type="number" 
+              id="showerMinutes"
               value={data.showerMinutes}
               onChange={(e) => onUpdate({...data, showerMinutes: e.target.value})}
               placeholder="e.g. 10"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+              aria-label="Daily shower duration in minutes"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">RO Waste (L/day)</label>
+            <label htmlFor="roWaste" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">RO Waste (L/day)</label>
             <input 
               type="number" 
+              id="roWaste"
               value={data.roWaste}
               onChange={(e) => onUpdate({...data, roWaste: e.target.value})}
               placeholder="e.g. 15"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+              aria-label="Reverse osmosis water waste per day in liters"
             />
           </div>
         </div>
@@ -79,17 +84,20 @@ export const WaterTracker = ({ data, onUpdate }: { data: any, onUpdate: (d: any)
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Dietary Profile</label>
           <div className="grid grid-cols-3 gap-2">
             {['vegan', 'vegetarian', 'omnivore'].map((type) => (
-              <button
+              <motion.button
                 key={type}
                 onClick={() => onUpdate({...data, dietType: type})}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className={`py-2 rounded-xl text-[9px] font-bold uppercase transition-all border ${
                   data.dietType === type 
                   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shadow-sm' 
                   : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'
                 }`}
+                aria-label={`Select ${type} dietary profile`}
               >
                 {type}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
