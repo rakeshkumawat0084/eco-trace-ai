@@ -43,17 +43,19 @@ export interface CalculationResult {
  * Calculates the monthly carbon footprint based on user inputs.
  */
 export function calculateCarbonFootprint(input: FootprintInput): CalculationResult {
-  const electricityScore = (parseFloat(input.electricity.toString()) || 0) * ELECTRICITY_FACTOR;
+  const val = (v: any) => (v != null ? parseFloat(v.toString()) : 0) || 0;
   
-  let dist = parseFloat(input.distance.toString()) || 0;
+  const electricityScore = val(input.electricity) * ELECTRICITY_FACTOR;
+  
+  let dist = val(input.distance);
   if (input.distanceUnit === "mi") {
     dist = dist * 1.60934;
   }
   
-  const transportScore = dist * (TRANSPORT_FACTORS[input.fuelType] || 0.17) * 4.33;
+  const transportScore = dist * (TRANSPORT_FACTORS[input.fuelType || ""] || 0.17) * 4.33;
   
-  const baseDietScore = DIET_FACTORS[input.dietType] || 250;
-  const sourcingFactor = 1 - ((parseFloat(input.localSourced.toString()) || 50) / 100) * 0.15;
+  const baseDietScore = DIET_FACTORS[input.dietType || ""] || 250;
+  const sourcingFactor = 1 - (val(input.localSourced) / 100) * 0.15;
   const dietScore = baseDietScore * sourcingFactor;
 
   const totalScore = electricityScore + transportScore + dietScore;

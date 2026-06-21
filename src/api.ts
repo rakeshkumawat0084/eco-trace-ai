@@ -1,5 +1,5 @@
 import express from "express";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import { GoogleGenAI } from "@google/genai";
 import { calculateCarbonFootprint } from "./lib/calculations";
 
@@ -83,29 +83,31 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader('Transfer-Encoding', 'chunked');
 
   try {
-    let systemInstruction = `You are EcoTrace AI, the premier expert carbon emissions consultant. 
+    // Robust safety fallback for breakdown data
+    const breakdown = context?.breakdown || { electricity: 0, transport: 0, diet: 0 };
+    const totalScore = context?.totalScore || 0;
+
+    const system_instruction = `You are EcoTrace AI, the premier expert carbon emissions consultant. 
     Analyze the user's primary carbon footprint data carefully.
     
     Current Carbon Profile: 
-    - Monthly Electricity: ${context.breakdown.electricity.toFixed(2)} kg CO2
-    - Transport Logistics: ${context.breakdown.transport.toFixed(2)} kg CO2
-    - Dietary Footprint: ${context.breakdown.diet.toFixed(2)} kg CO2
-    - Total Footprint: ${context.totalScore.toFixed(2)} kg CO2/month.
+    - Monthly Electricity: ${(breakdown.electricity || 0).toFixed(2)} kg CO2
+    - Transport Logistics: ${(breakdown.transport || 0).toFixed(2)} kg CO2
+    - Dietary Footprint: ${(breakdown.diet || 0).toFixed(2)} kg CO2
+    - Total Footprint: ${(totalScore || 0).toFixed(2)} kg CO2/month.
     
     Provide structured, actionable advice targeting their highest carbon emitter source. Respond using clean markdown formatting rules with bold key terms and bullet points. Maintain a high-fidelity, authoritative yet encouraging tone.`;
     
-    const result = await ai.models.generateContentStream({
+    const stream = await ai.interactions.create({
       model: "gemini-3.5-flash",
-      contents: message,
-      config: {
-        systemInstruction,
-      }
+      input: message,
+      system_instruction,
+      stream: true,
     });
 
-    for await (const chunk of result) {
-      const chunkText = chunk.text;
-      if (chunkText) {
-        res.write(chunkText);
+    for await (const event of stream) {
+      if (event.event_type === "step.delta" && event.delta.type === "text") {
+        res.write(event.delta.text);
       }
     }
 
